@@ -2,13 +2,12 @@ receivers:
   otlp:
     protocols:
       grpc:
-        endpoint: otel-collector:4317
+        endpoint: localhost:4317 # 通过grpc从app接收遥测数据
       http:
-        endpoint: otel-collector:4318
-
+        endpoint: localhost:4318 # 通过http从app接收遥测数据
 exporters:
   otlp:
-    endpoint: "jaeger:4317"
+    endpoint: localhost:43170 # 导出到jaeger-collector的gRPC端口
     tls:
       insecure: true
   debug:

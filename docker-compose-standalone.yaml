@@ -1,0 +1,43 @@
+services:
+  otel-collector:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.120.0
+    container_name: otel-collector
+    command: "--config=/etc/otelcol-config.yml"
+    volumes:
+      - ./otelcol-config-standalone.yml:/etc/otelcol-config.yml
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    depends_on:
+      - jaeger-collector
+
+  jaeger-collector:
+    image: jaegertracing/jaeger-collector:1.66.0
+    container_name: jaeger-collector
+    environment:
+      - SPAN_STORAGE_TYPE=elasticsearch
+      - ES_SERVER_URLS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    restart: always
+
+  jaeger-query:
+    image: jaegertracing/jaeger-query:1.66.0
+    container_name: jaeger-query
+    environment:
+      - SPAN_STORAGE_TYPE=elasticsearch
+      - ES_SERVER_URLS=http://elasticsearch:9200
+    ports:
+      - "16686:16686"
+    depends_on:
+      - elasticsearch
+    restart: always
+
+  elasticsearch:
+    image: elasticsearch:7.17.28
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"

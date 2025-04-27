@@ -4,10 +4,12 @@ services:
     container_name: otel-collector
     command: "--config=/etc/otelcol-config.yml"
     volumes:
-      - ./otelcol-config.yml:/etc/otelcol-config.yml
+      - ./otelcol-config-allinone.yml:/etc/otelcol-config.yml
     ports:
       - "4317:4317" # OTLP gRPC
       - "4318:4318" # OTLP HTTP
+    depends_on:
+      - jaeger
 
   jaeger:
     image: jaegertracing/all-in-one:1.66.0
