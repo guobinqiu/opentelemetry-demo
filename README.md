@@ -165,6 +165,16 @@ operator 安装 otel-collector
 operator 安装 jaeger
 > https://github.com/jaegertracing/jaeger-operator
 
+### 运行
+
+`svc-a` 的api `/a` 访问 `svc-b` 的 api `/b`
+
+![alt text](image-1.png)
+
+![alt text](image-2.png)
+
+![alt text](image-3.png)
+
 ## otel 对接 prometheus
 
 待更新
@@ -172,3 +182,4 @@ operator 安装 jaeger
 ## otel 对接 loki
 
 待更新
+
