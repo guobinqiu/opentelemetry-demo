@@ -3,7 +3,7 @@
 ## TODO LIST
 
 - [x] trace - otel对接jaeger
-- [ ] metrics - otel对接promethues
+- [ ] metrics - otel对接prometheus
 - [ ] log - otel对接loki
 
 ## otel 对接 jaeger
@@ -165,7 +165,7 @@ operator 安装 otel-collector
 operator 安装 jaeger
 > https://github.com/jaegertracing/jaeger-operator
 
-## otel 对接 promethues
+## otel 对接 prometheus
 
 待更新
 
