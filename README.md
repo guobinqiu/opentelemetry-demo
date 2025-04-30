@@ -224,7 +224,7 @@ exporters:
       insecure: true
   debug:
   prometheus:
-    endpoint: "localhost:9464" #让 Prometheus 来访问这个端口
+    endpoint: "localhost:9464" # 让Prometheus 来访问这个端口
 service:
   pipelines:
     traces:
@@ -277,9 +277,13 @@ http://locahost:16686
 
 `svc-a` 的api `/a` 调用 `svc-b` 的 api `/b` 查看跟踪数据
 
+![image](https://github.com/user-attachments/assets/9c9b5bcf-1557-415c-953c-ba4112743a87)
+
 ## prometheus
 
 http://localhost:9090
+
+![image](https://github.com/user-attachments/assets/0f5e1aea-68b8-48b7-9d0c-eb0cddc57bc8)
 
 统计`svc-a` 的api `/a` 被调用的次数
 
