@@ -11,8 +11,13 @@ exporters:
     tls:
       insecure: true
   debug:
+  prometheus:
+    endpoint: "localhost:9464" #让 Prometheus 来访问这个端口
 service:
   pipelines:
     traces:
       receivers: [otlp]
       exporters: [otlp, debug]
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheus]

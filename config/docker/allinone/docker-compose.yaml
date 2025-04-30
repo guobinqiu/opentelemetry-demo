@@ -4,7 +4,7 @@ services:
     container_name: otel-collector
     command: "--config=/etc/otelcol-config.yml"
     volumes:
-      - ./otelcol-config-allinone.yml:/etc/otelcol-config.yml
+      - ./otelcol-config.yml:/etc/otelcol-config.yml
     ports:
       - "4317:4317" # OTLP gRPC
       - "4318:4318" # OTLP HTTP
@@ -16,3 +16,11 @@ services:
     container_name: jaeger
     ports:
       - "16686:16686" # Jaeger UI
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml

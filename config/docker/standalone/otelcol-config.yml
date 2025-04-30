@@ -7,12 +7,17 @@ receivers:
         endpoint: otel-collector:4318 # 通过http从app接收遥测数据
 exporters:
   otlp:
-    endpoint: "jaeger:4317"
+    endpoint: jaeger-collector:4317 # 导出到jaeger-collector的gRPC端口
     tls:
       insecure: true
   debug:
+  prometheus:
+    endpoint: "0.0.0.0:9464" #让 Prometheus 来访问这个端口
 service:
   pipelines:
     traces:
       receivers: [otlp]
       exporters: [otlp, debug]
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheus]

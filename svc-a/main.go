@@ -7,29 +7,72 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+
+	// "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	// "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/resource"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
 func initTracer() func(context.Context) error {
-	exp, _ := otlptracehttp.New(context.Background(),
+	res, _ := sdkresource.New(context.Background(),
+		sdkresource.WithAttributes(
+			attribute.String("service.name", "service-a"),
+			attribute.String("service.version", "v1.0.0"),
+		),
+	)
+
+	// traceExporter, _ := otlptracegrpc.New(context.Background(),
+	// 	otlptracegrpc.WithEndpoint("localhost:4317"), // 对应otel-config的receiver的grpc的配置
+	// 	otlptracegrpc.WithInsecure(),
+	// )
+
+	traceExporter, _ := otlptracehttp.New(context.Background(),
 		otlptracehttp.WithEndpoint("localhost:4318"), // 对应otel-config的receiver的http的配置
 		otlptracehttp.WithInsecure(),
 	)
-	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(exp),
-		sdktrace.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceName("service-a"),
-		)),
-	)
-	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(propagation.TraceContext{})
 
-	return tp.Shutdown
+	traceProvider := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(traceExporter),
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(1))),
+		sdktrace.WithResource(res),
+	)
+	otel.SetTracerProvider(traceProvider)
+	return traceProvider.Shutdown
+}
+
+func initMetric() func(context.Context) error {
+	res, _ := sdkresource.New(context.Background(),
+		sdkresource.WithAttributes(
+			attribute.String("service.name", "service-a"),
+			attribute.String("service.version", "v1.0.0"),
+		),
+	)
+
+	// metricExporter, _ := otlpmetricgrpc.New(context.Background(),
+	// 	otlpmetricgrpc.WithEndpoint("localhost:4317"), // 对应otel-config的receiver的grpc的配置
+	// 	otlpmetricgrpc.WithInsecure(),
+	// )
+
+	metricExporter, _ := otlpmetrichttp.New(context.Background(),
+		otlpmetrichttp.WithEndpoint("localhost:4318"),
+		otlpmetrichttp.WithInsecure(),
+	)
+
+	metricProvider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter)),
+		sdkmetric.WithResource(res),
+	)
+
+	otel.SetMeterProvider(metricProvider)
+
+	return metricProvider.Shutdown
 }
 
 // server 自动 Trace 用中间件统一 Extract()
@@ -43,6 +86,21 @@ func traceMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func metricMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		meter := otel.Meter("service-a")
+		apiRequestCounter, _ := meter.Int64Counter("http_requests_total")
+
+		apiRequestCounter.Add(r.Context(), 1,
+			metric.WithAttributes(
+				attribute.String("method", r.Method),
+				attribute.String("path", r.URL.Path),
+			),
+		)
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -72,8 +130,11 @@ func main() {
 	shutdown := initTracer()
 	defer shutdown(context.Background())
 
+	shutdown2 := initMetric()
+	defer shutdown2(context.Background())
+
 	mux := http.NewServeMux()
-	mux.Handle("/a", traceMiddleware(http.HandlerFunc(handler)))
+	mux.Handle("/a", traceMiddleware(metricMiddleware(http.HandlerFunc(handler))))
 
 	log.Println("Service A running on :8081")
 	log.Fatal(http.ListenAndServe(":8081", mux))
