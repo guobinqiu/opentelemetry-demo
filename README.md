@@ -1,4 +1,4 @@
-# OpenTelemetry (otel) Demo
+# OpenTelemetry(otel) Demo
 
 | traces                        | metrics                     | logs                  |
 | ----------------------------- | --------------------------- | --------------------- |
@@ -26,7 +26,7 @@
 
 ### all-in-one 模式
 
-1.配置`config/docker/allinone/otelcol-config.yml`
+1.配置 `config/docker/allinone/otelcol-config.yml`
 
 ```
 receivers:
@@ -43,7 +43,7 @@ exporters:
       insecure: true
   debug:
   prometheus:
-    endpoint: "0.0.0.0:9464" #让 Prometheus 来访问这个端口
+    endpoint: "0.0.0.0:9464" # 让Prometheus来访问这个端口
 service:
   pipelines:
     traces:
@@ -54,7 +54,7 @@ service:
       exporters: [prometheus]
 ```
 
-2.配置`config/docker/allinone/prometheus.yml`
+2.配置 `config/docker/allinone/prometheus.yml`
 
 ```
 scrape_configs:
@@ -63,7 +63,7 @@ scrape_configs:
       - targets: ['otel-collector:9464']
 ```
 
-3.配置`config/docker/allinone/docker-compose.yaml`
+3.配置 `config/docker/allinone/docker-compose.yaml`
 
 ```
 services:
@@ -96,7 +96,7 @@ services:
 
 ### standalone 模式
 
-1.配置`config/docker/standalone/otel-config.yml`
+1.配置 `config/docker/standalone/otel-config.yml`
 
 ```
 receivers:
@@ -112,14 +112,19 @@ exporters:
     tls:
       insecure: true
   debug:
+  prometheus:
+    endpoint: "0.0.0.0:9464" # 让Prometheus来访问这个端口
 service:
   pipelines:
     traces:
       receivers: [otlp]
       exporters: [otlp, debug]
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheus]
 ```
 
-2.配置`config/docker/standalone/prometheus.yml`
+2.配置 `config/docker/standalone/prometheus.yml`
 
 ```
 scrape_configs:
@@ -128,7 +133,7 @@ scrape_configs:
       - targets: ['otel-collector:9464']
 ```
 
-3.配置`config/docker/standalone/docker-compose.yaml`
+3.配置 `config/docker/standalone/docker-compose.yaml`
 
 ```
 services:
@@ -181,7 +186,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml  
 ```
 
 ## 二进制文件 安装
@@ -202,7 +207,7 @@ services:
 
 可根据需要自行下载指定版本到bin目录下
 
-1.配置`config/otelcol-config.yml`
+1.配置 `config/otelcol-config.yml`
 
 ```
 receivers:
@@ -230,7 +235,7 @@ service:
       exporters: [prometheus]
 ```
 
-2.配置`config/prometheus.yml`
+2.配置 `config/prometheus.yml`
 
 ```
 scrape_configs:
@@ -239,15 +244,15 @@ scrape_configs:
       - targets: ['localhost:9464']
 ```
 
-3.运行`otel-collector`
+3.运行 `otel-collector`
 
 ```
 ./bin/otelcol-contrib --config config/otelcol-config.yml
 ```
 
-4.运行`jaeger-collector`
+4.运行 `jaeger-collector`
 
-由于`otel-collector`默认已经启动在了`4317`和`4318`端口, 如果在同一台机器上启动`jaeger-collector`需要修改otlp对应的端口为`43170`和`43180`来避免端口冲突
+由于 `otel-collector` 默认已经启动在了 `4317` 和 `4318` 端口, 如果在同一台机器上启动 `jaeger-collector` 需要修改otlp对应的端口为 `43170` 和 `43180` 来避免端口冲突
 
 ```
 export SPAN_STORAGE_TYPE=elasticsearch
@@ -258,7 +263,7 @@ export ES_SERVER_URLS=http://localhost:9200
   --collector.otlp.http.host-port=:43180
 ```
 
-5.运行`jaeger-query`
+5.运行 `jaeger-query`
 
 ```
 export SPAN_STORAGE_TYPE=elasticsearch

@@ -12,7 +12,7 @@ exporters:
       insecure: true
   debug:
   prometheus:
-    endpoint: "localhost:9464" #让 Prometheus 来访问这个端口
+    endpoint: "localhost:9464" # 让Prometheus来访问这个端口
 service:
   pipelines:
     traces:
