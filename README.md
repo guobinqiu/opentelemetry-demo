@@ -6,7 +6,7 @@
 
 > 注意: 这里有个巨坑 单机使用badger无法让jaeger-collector和jaeger-query共享存储 后果就是配置没有问题但是 jaeger-query 无论如何看不到 trace 数据 这里使用elasticsearch作为jaeger的后端存储
 
-![alt text](img/image.png)
+![alt text](./img/image.png)
 
 各服务默认端口列表
 
