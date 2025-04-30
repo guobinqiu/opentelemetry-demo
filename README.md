@@ -26,7 +26,7 @@
 
 ### all-in-one 模式
 
-1.配置 `config/docker/allinone/otelcol-config.yml`
+1.配置 `install/docker/allinone/otelcol-config.yml`
 
 ```
 receivers:
@@ -54,7 +54,7 @@ service:
       exporters: [prometheus]
 ```
 
-2.配置 `config/docker/allinone/prometheus.yml`
+2.配置 `install/docker/allinone/prometheus.yml`
 
 ```
 scrape_configs:
@@ -63,7 +63,7 @@ scrape_configs:
       - targets: ['otel-collector:9464']
 ```
 
-3.配置 `config/docker/allinone/docker-compose.yaml`
+3.配置 `install/docker/allinone/docker-compose.yaml`
 
 ```
 services:
@@ -96,7 +96,7 @@ services:
 
 ### standalone 模式
 
-1.配置 `config/docker/standalone/otel-config.yml`
+1.配置 `install/docker/standalone/otel-config.yml`
 
 ```
 receivers:
@@ -124,7 +124,7 @@ service:
       exporters: [prometheus]
 ```
 
-2.配置 `config/docker/standalone/prometheus.yml`
+2.配置 `install/docker/standalone/prometheus.yml`
 
 ```
 scrape_configs:
@@ -133,7 +133,7 @@ scrape_configs:
       - targets: ['otel-collector:9464']
 ```
 
-3.配置 `config/docker/standalone/docker-compose.yaml`
+3.配置 `install/docker/standalone/docker-compose.yaml`
 
 ```
 services:
@@ -207,7 +207,7 @@ services:
 
 可根据需要自行下载指定版本到bin目录下
 
-1.配置 `config/otelcol-config.yml`
+1.配置 `install/otelcol-config.yml`
 
 ```
 receivers:
@@ -235,7 +235,7 @@ service:
       exporters: [prometheus]
 ```
 
-2.配置 `config/prometheus.yml`
+2.配置 `install/prometheus.yml`
 
 ```
 scrape_configs:
@@ -247,7 +247,7 @@ scrape_configs:
 3.运行 `otel-collector`
 
 ```
-./bin/otelcol-contrib --config config/otelcol-config.yml
+./bin/otelcol-contrib --config install/otelcol-config.yml
 ```
 
 4.运行 `jaeger-collector`
