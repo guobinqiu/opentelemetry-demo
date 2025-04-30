@@ -6,7 +6,7 @@
 
 > 注意: 这里有个巨坑 单机使用badger无法让jaeger-collector和jaeger-query共享存储 后果就是配置没有问题但是 jaeger-query 无论如何看不到 trace 数据 这里使用elasticsearch作为jaeger的后端存储
 
-![alt text](./img/image.png)
+![image](https://github.com/user-attachments/assets/565d5d36-dddb-4895-ad84-a8e47e62f310)
 
 各服务默认端口列表
 
@@ -272,19 +272,11 @@ http://locahost:16686
 
 `svc-a` 的api `/a` 调用 `svc-b` 的 api `/b` 查看跟踪数据
 
-![alt text](img/image-1.png)
-
-![alt text](img/image-2.png)
-
-![alt text](img/image-3.png)
-
 ## prometheus
 
 http://localhost:9090
 
 统计`svc-a` 的api `/a` 被调用的次数
-
-![alt text](img/image-4.png)
 
 ## loki
 
