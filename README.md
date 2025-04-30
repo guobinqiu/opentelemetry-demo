@@ -189,7 +189,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml  
 ```
 
-## 二进制文件 安装
+## 二进制安装
 
 ### 下载
 
