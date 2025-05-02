@@ -498,10 +498,12 @@ http://locahost:16686
 ![image](https://github.com/user-attachments/assets/9c9b5bcf-1557-415c-953c-ba4112743a87)
 
 grafana 配置
-1. Add new data source > Connection URL: http://jaeger-query:16686
-2. Explore view > Query type: Search
+1. Add new data source > Connection URL:
+   - http://jaeger:16686 (all-in-one)
+   - http://jaeger-query:16686 (standalone)
+3. Explore view > Query type: Search
 
-![image](https://github.com/user-attachments/assets/57b579bf-8c86-4b4c-9d27-1e628fb2ecd8)
+<img width="1197" alt="image" src="https://github.com/user-attachments/assets/e26daa73-4176-40d8-bf2c-89ac66b28506" />
 
 ## prometheus
 
