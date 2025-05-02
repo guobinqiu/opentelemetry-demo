@@ -421,7 +421,7 @@ services:
 
 可根据需要自行下载指定版本到bin目录下
 
-1.配置 `install/otelcol-config.yml`
+1. 配置 `install/otelcol-config.yml`
 
 ```
 receivers:
@@ -449,7 +449,7 @@ service:
       exporters: [prometheus]
 ```
 
-2.配置 `install/prometheus.yml`
+2. 配置 `install/prometheus.yml`
 
 ```
 scrape_configs:
@@ -458,13 +458,13 @@ scrape_configs:
       - targets: ['localhost:9464']
 ```
 
-3.运行 `otel-collector`
+3. 运行 `otel-collector`
 
 ```
 ./bin/otelcol-contrib --config install/otelcol-config.yml
 ```
 
-4.运行 `jaeger-collector`
+4. 运行 `jaeger-collector`
 
 由于 `otel-collector` 默认已经启动在了 `4317` 和 `4318` 端口, 如果在同一台机器上启动 `jaeger-collector` 需要修改otlp对应的端口为 `43170` 和 `43180` 来避免端口冲突
 
@@ -477,7 +477,7 @@ export ES_SERVER_URLS=http://localhost:9200
   --collector.otlp.http.host-port=:43180
 ```
 
-5.运行 `jaeger-query`
+5. 运行 `jaeger-query`
 
 ```
 export SPAN_STORAGE_TYPE=elasticsearch
