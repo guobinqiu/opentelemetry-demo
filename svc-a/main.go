@@ -51,7 +51,10 @@ func initTracer() func(context.Context) error {
 		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(1))),
 		sdktrace.WithResource(res),
 	)
+
 	otel.SetTracerProvider(traceProvider)
+	otel.SetTextMapPropagator(propagation.TraceContext{}) // 重要
+
 	return traceProvider.Shutdown
 }
 
