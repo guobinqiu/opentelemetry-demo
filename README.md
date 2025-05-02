@@ -1,14 +1,14 @@
 # OpenTelemetry(otel) Demo
 
-| traces                        | metrics                     | logs                  |
-| ----------------------------- | --------------------------- | --------------------- |
-| otel + jaeger + elasticsearch | otel + prometheus + grafana | otel + loki + grafana |
+> https://opentelemetry.io/docs/languages/go
 
-> 注意: 这里有个巨坑 单机使用badger无法让jaeger-collector和jaeger-query共享存储 后果就是配置没有问题但是 jaeger-query 无论如何看不到 trace 数据 这里使用elasticsearch作为jaeger的后端存储
+| traces | metrics    | logs |
+| ------ | ---------- | ---- |
+| jaeger | prometheus | loki |
+
+jaeger 这里有个巨坑 单机使用badger无法让jaeger-collector和jaeger-query共享存储 后果就是配置没有问题但是 jaeger-query 无论如何看不到 trace 数据 这里使用elasticsearch作为jaeger的后端存储
 
 ![image](https://github.com/user-attachments/assets/565d5d36-dddb-4895-ad84-a8e47e62f310)
-
-各服务默认端口列表
 
 | 端口  | 说明                                    |
 | ----- | --------------------------------------- |
@@ -26,7 +26,7 @@
 
 ### all-in-one 模式
 
-1.配置 `install/docker/allinone/otelcol-config.yml`
+1. 配置 `install/docker/allinone/otelcol-config.yml`
 
 ```
 receivers:
@@ -54,7 +54,7 @@ service:
       exporters: [prometheus]
 ```
 
-2.配置 `install/docker/allinone/prometheus.yml`
+2. 配置 `install/docker/allinone/prometheus.yml`
 
 ```
 scrape_configs:
@@ -63,7 +63,91 @@ scrape_configs:
       - targets: ['otel-collector:9464']
 ```
 
-3.配置 `install/docker/allinone/docker-compose.yaml`
+3. 配置 `install/docker/allinone/loki-config.yaml`
+
+> https://raw.githubusercontent.com/grafana/loki/v3.4.1/cmd/loki/loki-local-config.yaml
+
+```
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: debug
+  grpc_server_max_concurrent_streams: 1000
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /tmp/loki
+  storage:
+    filesystem:
+      chunks_directory: /tmp/loki/chunks
+      rules_directory: /tmp/loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 100
+
+limits_config:
+  metric_aggregation_enabled: true
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+pattern_ingester:
+  enabled: true
+  metric_aggregation:
+    loki_address: localhost:3100
+
+ruler:
+  alertmanager_url: http://localhost:9093
+
+frontend:
+  encoding: protobuf
+```
+
+1. 配置 `install/docker/allinone/promtail-config.yaml`
+
+> https://raw.githubusercontent.com/grafana/loki/v3.4.1/clients/cmd/promtail/promtail-docker-config.yaml
+
+```
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+- job_name: system
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: varlogs
+      __path__: /var/log/*log
+```
+
+5. 配置 `install/docker/allinone/docker-compose.yaml`
+
+> https://raw.githubusercontent.com/grafana/loki/v3.4.1/production/docker-compose.yaml
 
 ```
 services:
@@ -86,17 +170,43 @@ services:
       - "16686:16686" # Jaeger UI
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus
     container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  loki:
+    image: grafana/loki
+    container_name: loki
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - /tmp/log:/var/log
+      - ./promtail-config.yaml:/etc/promtail/config.yml
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    ports:
+      - "3000:3000"
 ```
 
 ### standalone 模式
 
-1.配置 `install/docker/standalone/otel-config.yml`
+1. 配置 `install/docker/standalone/otel-config.yml`
 
 ```
 receivers:
@@ -124,7 +234,7 @@ service:
       exporters: [prometheus]
 ```
 
-2.配置 `install/docker/standalone/prometheus.yml`
+2. 配置 `install/docker/standalone/prometheus.yml`
 
 ```
 scrape_configs:
@@ -133,7 +243,85 @@ scrape_configs:
       - targets: ['otel-collector:9464']
 ```
 
-3.配置 `install/docker/standalone/docker-compose.yaml`
+3. 配置 `install/docker/standalone/loki-config.yaml`
+
+```
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: debug
+  grpc_server_max_concurrent_streams: 1000
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /tmp/loki
+  storage:
+    filesystem:
+      chunks_directory: /tmp/loki/chunks
+      rules_directory: /tmp/loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 100
+
+limits_config:
+  metric_aggregation_enabled: true
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+pattern_ingester:
+  enabled: true
+  metric_aggregation:
+    loki_address: localhost:3100
+
+ruler:
+  alertmanager_url: http://localhost:9093
+
+frontend:
+  encoding: protobuf
+```
+
+4. 配置 `install/docker/standalone/promtail-config.yaml`
+
+```
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+- job_name: system
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: varlogs
+      __path__: /var/log/*log
+```
+
+5. 配置 `install/docker/standalone/docker-compose.yaml`
 
 ```
 services:
@@ -186,7 +374,33 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml  
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  loki:
+    image: grafana/loki
+    container_name: loki
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - /tmp/log:/var/log
+      - ./promtail-config.yaml:/etc/promtail/config.yml
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    ports:
+      - "3000:3000"
 ```
 
 ## 二进制安装
@@ -279,6 +493,10 @@ http://locahost:16686
 
 ![image](https://github.com/user-attachments/assets/9c9b5bcf-1557-415c-953c-ba4112743a87)
 
+grafana 配置
+1. Add new data source > Connection URL: http://jaeger-query:16686
+2. Explore view > Query type: Search
+
 ## prometheus
 
 http://localhost:9090
@@ -287,6 +505,13 @@ http://localhost:9090
 
 统计`svc-a` 的api `/a` 被调用的次数
 
+grafana 配置
+1. Add new data source > Connection URL: http://promethues:9090
+2. Explore view > Metric: http_requests_total
+
 ## loki
 
-待更新
+http://localhost:3000
+
+1. Add new data source > Connection URL: http://loki:3100
+2. Explore view > Filters: {job="varlogs"} |= ``

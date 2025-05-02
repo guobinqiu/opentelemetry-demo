@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io"
-	"log"
 	"net/http"
 
 	"go.opentelemetry.io/otel"
@@ -12,12 +11,21 @@ import (
 
 	// "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	// "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
+	// go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc
+
+	// "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
+
+	// sdklog "go.opentelemetry.io/otel/sdk/log"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+
+	// "go.opentelemetry.io/otel/log/global"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func initTracer() func(context.Context) error {
@@ -75,6 +83,29 @@ func initMetric() func(context.Context) error {
 	return metricProvider.Shutdown
 }
 
+// func initLog() func(context.Context) error {
+// 	res, _ := sdkresource.New(context.Background(),
+// 		sdkresource.WithAttributes(
+// 			attribute.String("service.name", "service-a"),
+// 			attribute.String("service.version", "v1.0.0"),
+// 		),
+// 	)
+
+// 	logExporter, _ := otlploghttp.New(context.Background(),
+// 		otlploghttp.WithEndpoint("localhost:4318"),
+// 		otlploghttp.WithInsecure(),
+// 	)
+
+// 	logProvider := sdklog.NewLoggerProvider(
+// 		sdklog.WithProcessor(sdklog.NewBatchProcessor(logExporter)),
+// 		sdklog.WithResource(res),
+// 	)
+
+// 	global.SetLoggerProvider(logProvider)
+
+// 	return logProvider.Shutdown
+// }
+
 // server 自动 Trace 用中间件统一 Extract()
 func traceMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -106,6 +137,8 @@ func metricMiddleware(next http.Handler) http.Handler {
 
 // 实际处理逻辑 调用service-b的接口
 func handler(w http.ResponseWriter, r *http.Request) {
+	log.WithField("svc", "svc-a").WithField("api", "/a").Info("this is a log")
+
 	ctx := r.Context()
 
 	// 请求 service-b，注入当前 trace
