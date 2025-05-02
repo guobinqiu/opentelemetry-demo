@@ -497,6 +497,8 @@ grafana 配置
 1. Add new data source > Connection URL: http://jaeger-query:16686
 2. Explore view > Query type: Search
 
+![image](https://github.com/user-attachments/assets/57b579bf-8c86-4b4c-9d27-1e628fb2ecd8)
+
 ## prometheus
 
 http://localhost:9090
@@ -509,9 +511,13 @@ grafana 配置
 1. Add new data source > Connection URL: http://promethues:9090
 2. Explore view > Metric: http_requests_total
 
+![image](https://github.com/user-attachments/assets/336b0fc9-14de-4a7d-8181-7b5cc47d8a52)
+
 ## loki
 
 http://localhost:3000
 
 1. Add new data source > Connection URL: http://loki:3100
 2. Explore view > Filters: {job="varlogs"} |= ``
+
+![image](https://github.com/user-attachments/assets/5621104b-2f9a-4104-8737-9b962988fea3)
