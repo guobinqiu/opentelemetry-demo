@@ -126,6 +126,8 @@ frontend:
 
 1. 配置 `install/docker/allinone/promtail-config.yaml`
 
+`promtail` 从文件抓取日志并推送 `loki`
+
 > https://raw.githubusercontent.com/grafana/loki/v3.4.1/clients/cmd/promtail/promtail-docker-config.yaml
 
 ```
@@ -522,6 +524,12 @@ grafana 配置
 ## loki
 
 http://localhost:3000
+
+日志写入文件
+
+```
+go run svc-a/main.go > /tmp/log/otel-demo.log 2>&1 
+```
 
 grafana 配置
 1. Add new data source > Connection URL: http://loki:3100
