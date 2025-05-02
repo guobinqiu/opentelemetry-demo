@@ -124,9 +124,7 @@ frontend:
   encoding: protobuf
 ```
 
-1. 配置 `install/docker/allinone/promtail-config.yaml`
-
-`promtail` 从文件抓取日志并推送 `loki`
+4. 配置 `install/docker/allinone/promtail-config.yaml`
 
 > https://raw.githubusercontent.com/grafana/loki/v3.4.1/clients/cmd/promtail/promtail-docker-config.yaml
 
