@@ -517,6 +517,7 @@ grafana 配置
 
 http://localhost:3000
 
+grafana 配置
 1. Add new data source > Connection URL: http://loki:3100
 2. Explore view > Filters: {job="varlogs"} |= ``
 
