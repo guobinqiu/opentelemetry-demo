@@ -503,7 +503,7 @@ grafana 配置
    - http://jaeger-query:16686 (standalone)
 3. Explore view > Query type: Search
 
-<img width="1197" alt="image" src="https://github.com/user-attachments/assets/e26daa73-4176-40d8-bf2c-89ac66b28506" />
+![image](https://github.com/user-attachments/assets/e26daa73-4176-40d8-bf2c-89ac66b28506)
 
 ## prometheus
 
