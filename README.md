@@ -355,7 +355,7 @@ export ES_SERVER_URLS=http://localhost:9200
 
 ### jaeger
 
-http://locahost:16686
+Web UI: http://locahost:16686
 
 `svc-a` 的api `/a` 调用 `svc-b` 的 api `/b` 查看跟踪数据
 
@@ -371,7 +371,7 @@ http://locahost:16686
 
 ### prometheus
 
-http://localhost:9090
+Web UI: http://localhost:9090
 
 ![image](https://github.com/user-attachments/assets/0f5e1aea-68b8-48b7-9d0c-eb0cddc57bc8)
 
@@ -385,7 +385,7 @@ http://localhost:9090
 
 ### loki
 
-http://localhost:3000
+Web UI: http://localhost:3000
 
 日志写入文件
 
