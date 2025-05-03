@@ -8,7 +8,9 @@
 - metrics
 - logs
 
-traces 流程
+## 数据流图
+
+### traces
 
 ```mermaid
 graph LR;
@@ -17,11 +19,7 @@ graph LR;
     grafana --> |pull|ui[jaeger query]
 ```
 
-jaeger 这里有个巨坑 单机使用badger无法让jaeger-collector和jaeger-query共享存储 后果就是配置没有问题但是 jaeger-query 无论如何看不到 trace 数据 这里使用elasticsearch作为jaeger的后端存储
-
-![image](https://github.com/user-attachments/assets/565d5d36-dddb-4895-ad84-a8e47e62f310)
-
-metrics 流程
+### metrics
 
 ```mermaid
 graph LR;
@@ -30,7 +28,7 @@ graph LR;
     grafana --> |pull|prometheus
 ```
 
-logs 流程
+### logs
 
 ```mermaid
 graph LR;
@@ -39,6 +37,8 @@ graph LR;
     promtail --> |push|loki
     grafana --> |pull|loki
 ```
+
+## 服务端口列表
 
 | 端口  | 说明                                    |
 | ----- | --------------------------------------- |
@@ -54,11 +54,11 @@ graph LR;
 
 ## docker 安装
 
-### all-in-one 模式
+### standalone 模式
 
-> https://github.com/guobinqiu/otel-demo/tree/main/install/docker/allinone
+> https://github.com/guobinqiu/otel-demo/tree/main/install/docker/standalone
 
-1. 配置 `install/docker/allinone/otelcol-config.yml`
+1. 配置 `install/docker/standalone/otel-config.yml`
 
 ```
 receivers:
@@ -70,7 +70,7 @@ receivers:
         endpoint: otel-collector:4318 # 通过http从app接收遥测数据
 exporters:
   otlp:
-    endpoint: "jaeger:4317"
+    endpoint: jaeger-collector:4317 # 导出到jaeger-collector的gRPC端口
     tls:
       insecure: true
   debug:
@@ -86,7 +86,7 @@ service:
       exporters: [prometheus]
 ```
 
-2. 配置 `install/docker/allinone/prometheus.yml`
+2. 配置 `install/docker/standalone/prometheus.yml`
 
 ```
 scrape_configs:
@@ -95,7 +95,7 @@ scrape_configs:
       - targets: ['otel-collector:9464']
 ```
 
-3. 配置 `install/docker/allinone/loki-config.yaml`
+3. 配置 `install/docker/standalone/loki-config.yaml`
 
 > https://raw.githubusercontent.com/grafana/loki/v3.4.1/cmd/loki/loki-local-config.yaml
 
@@ -152,7 +152,7 @@ frontend:
   encoding: protobuf
 ```
 
-4. 配置 `install/docker/allinone/promtail-config.yaml`
+4. 配置 `install/docker/standalone/promtail-config.yaml`
 
 > https://raw.githubusercontent.com/grafana/loki/v3.4.1/clients/cmd/promtail/promtail-docker-config.yaml
 
@@ -177,7 +177,7 @@ scrape_configs:
       __path__: /var/log/*log
 ```
 
-5. 配置 `install/docker/allinone/docker-compose.yaml`
+5. 配置 `install/docker/standalone/docker-compose.yaml`
 
 > https://raw.githubusercontent.com/grafana/loki/v3.4.1/production/docker-compose.yaml
 
@@ -193,16 +193,41 @@ services:
       - "4317:4317" # OTLP gRPC
       - "4318:4318" # OTLP HTTP
     depends_on:
-      - jaeger
+      - jaeger-collector
 
-  jaeger:
-    image: jaegertracing/all-in-one:1.66.0
-    container_name: jaeger
+  jaeger-collector:
+    image: jaegertracing/jaeger-collector:1.66.0
+    container_name: jaeger-collector
+    environment:
+      - SPAN_STORAGE_TYPE=elasticsearch
+      - ES_SERVER_URLS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    restart: always
+
+  jaeger-query:
+    image: jaegertracing/jaeger-query:1.66.0
+    container_name: jaeger-query
+    environment:
+      - SPAN_STORAGE_TYPE=elasticsearch
+      - ES_SERVER_URLS=http://elasticsearch:9200
     ports:
-      - "16686:16686" # Jaeger UI
+      - "16686:16686"
+    depends_on:
+      - elasticsearch
+    restart: always
+
+  elasticsearch:
+    image: elasticsearch:7.17.28
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:latest
     container_name: prometheus
     ports:
       - "9090:9090"
@@ -236,9 +261,13 @@ services:
       - "3000:3000"
 ```
 
-### standalone 模式
+jaeger 这里有个巨坑 单机使用badger无法让jaeger-collector和jaeger-query共享存储 后果就是配置没有问题但是 jaeger-query 无论如何看不到 trace 数据 这里使用elasticsearch作为jaeger的后端存储
 
-> https://github.com/guobinqiu/otel-demo/tree/main/install/docker/standalone
+![image](https://github.com/user-attachments/assets/565d5d36-dddb-4895-ad84-a8e47e62f310)
+
+### all-in-one 模式
+
+> https://github.com/guobinqiu/otel-demo/tree/main/install/docker/allinone
 
 ## 二进制安装
 
@@ -322,7 +351,9 @@ export ES_SERVER_URLS=http://localhost:9200
 ./bin/jaeger-query
 ```
 
-## jaeger UI
+## 查看监控
+
+### jaeger
 
 http://locahost:16686
 
@@ -330,15 +361,15 @@ http://locahost:16686
 
 ![image](https://github.com/user-attachments/assets/9c9b5bcf-1557-415c-953c-ba4112743a87)
 
-grafana 配置
+配置到 `grafana`
 1. Add new data source > Connection URL:
-   - http://jaeger:16686 (all-in-one)
    - http://jaeger-query:16686 (standalone)
-3. Explore view > Query type: Search
+   - http://jaeger:16686 (all-in-one)
+2. Explore view > Query type: Search
 
 ![image](https://github.com/user-attachments/assets/e26daa73-4176-40d8-bf2c-89ac66b28506)
 
-## prometheus
+### prometheus
 
 http://localhost:9090
 
@@ -346,13 +377,13 @@ http://localhost:9090
 
 统计`svc-a` 的api `/a` 被调用的次数
 
-grafana 配置
+配置到 `grafana`
 1. Add new data source > Connection URL: http://promethues:9090
 2. Explore view > Metric: http_requests_total
 
 ![image](https://github.com/user-attachments/assets/336b0fc9-14de-4a7d-8181-7b5cc47d8a52)
 
-## loki
+### loki
 
 http://localhost:3000
 
@@ -362,7 +393,7 @@ http://localhost:3000
 go run svc-a/main.go > /tmp/log/otel-demo.log 2>&1 
 ```
 
-grafana 配置
+配置到 `grafana`
 1. Add new data source > Connection URL: http://loki:3100
 2. Explore view > Filters: {job="varlogs"} |= ``
 
