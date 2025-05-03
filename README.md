@@ -2,7 +2,7 @@
 
 > https://opentelemetry.io/docs/languages/go
 
-监控三驾马车
+遥测数据监控三驾马车:
 
 - traces
 - metrics
