@@ -56,6 +56,8 @@ graph LR;
 
 ### all-in-one 模式
 
+> https://github.com/guobinqiu/otel-demo/tree/main/install/docker/allinone
+
 1. 配置 `install/docker/allinone/otelcol-config.yml`
 
 ```
