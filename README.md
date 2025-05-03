@@ -236,9 +236,7 @@ services:
 
 ### standalone 模式
 
-和 `all-in-one` 类似不再赘述
-
-> install/docker/standalone
+> https://github.com/guobinqiu/otel-demo/tree/main/install/docker/standalone
 
 ## 二进制安装
 
