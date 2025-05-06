@@ -373,12 +373,6 @@ Web UI: http://locahost:16686
 
 Web UI: http://localhost:9090
 
-造数据 10万并发持续访问1分钟
-
-```
-wrk -c 100000 -d 1m http://localhost:8081/a
-```
-
 http_requests_total
 
 <img width="1499" alt="image" src="https://github.com/user-attachments/assets/4f6b1fef-5110-45d1-a24a-d92589773396" />
