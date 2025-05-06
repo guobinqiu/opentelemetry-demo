@@ -373,15 +373,39 @@ Web UI: http://locahost:16686
 
 Web UI: http://localhost:9090
 
-![image](https://github.com/user-attachments/assets/0f5e1aea-68b8-48b7-9d0c-eb0cddc57bc8)
+造数据 10万并发持续访问1分钟
 
-统计`svc-a` 的api `/a` 被调用的次数
+```
+wrk -c 100000 -d1m http://localhost:8081/a
+```
+
+http_requests_total
+
+<img width="1499" alt="image" src="https://github.com/user-attachments/assets/4f6b1fef-5110-45d1-a24a-d92589773396" />
+
+QPS: rate(http_requests_total[1m])
+
+<img width="1493" alt="image" src="https://github.com/user-attachments/assets/747391e0-ad08-449d-837a-78bd10676e41" />
+
+Latency: http_request_duration_seconds_bucket
+
+<img width="1494" alt="image" src="https://github.com/user-attachments/assets/bf6e0975-f042-43b0-94ae-2b4770111b5c" />
 
 配置到 `grafana`
 1. Add new data source > Connection URL: http://promethues:9090
-2. Explore view > Metric: http_requests_total
+2. Explore view > Metric
 
-![image](https://github.com/user-attachments/assets/336b0fc9-14de-4a7d-8181-7b5cc47d8a52)
+http_requests_total
+
+<img width="1225" alt="image" src="https://github.com/user-attachments/assets/336b0fc9-14de-4a7d-8181-7b5cc47d8a52" />
+
+QPS: rate(http_requests_total[1m])
+
+<img width="1225" alt="image" src="https://github.com/user-attachments/assets/8df57b31-af29-4627-971c-16bfbf5788c9" />
+
+Latency: http_request_duration_seconds_bucket
+
+<img width="1225" alt="image" src="https://github.com/user-attachments/assets/95599f07-c17f-4cba-bc90-744bbac17c7e" />
 
 ### loki
 
