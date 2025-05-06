@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -59,6 +60,27 @@ func initTracer() func(context.Context) error {
 }
 
 func initMetric() func(context.Context) error {
+	// 自定义直方图用到的桶边界
+	// 把各请求时长分布到不同的桶比统一算平均要准
+	// 如果一个请求花了9s, 那么10 和 +inf 两个桶计数会+1
+	// 如果一个请求花了0.04s, 那么0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, +inf 这些桶计数都会+1
+	// 也可以通过在otel-config.yml里配置processor来自定义桶边界
+	customBuckets := []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10}
+	view := sdkmetric.NewView(
+		sdkmetric.Instrument{
+			Name: "http_request_duration_seconds",
+			Kind: sdkmetric.InstrumentKindHistogram,
+		},
+		sdkmetric.Stream{
+			Name:        "http_request_duration_seconds",
+			Description: "The duration of the inbound HTTP request",
+			Unit:        "s",
+			Aggregation: sdkmetric.AggregationExplicitBucketHistogram{
+				Boundaries: customBuckets,
+			},
+		},
+	)
+
 	res, _ := sdkresource.New(context.Background(),
 		sdkresource.WithAttributes(
 			attribute.String("service.name", "service-a"),
@@ -79,6 +101,7 @@ func initMetric() func(context.Context) error {
 	metricProvider := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter)),
 		sdkmetric.WithResource(res),
+		sdkmetric.WithView(view),
 	)
 
 	otel.SetMeterProvider(metricProvider)
@@ -123,6 +146,10 @@ func traceMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// type HandlerFunc func(ResponseWriter, *Request)
+
+// 统一api总请求数
+// 若通过grafana里配置query为rate(http_requests_total[1m])便可求得QPS
 func metricMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		meter := otel.Meter("service-a")
@@ -135,6 +162,27 @@ func metricMiddleware(next http.Handler) http.Handler {
 			),
 		)
 		next.ServeHTTP(w, r)
+	})
+}
+
+// 统计api响应时长
+func latencyMetricMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		meter := otel.Meter("service-a")
+		requestDuration, _ := meter.Float64Histogram("http_request_duration_seconds")
+
+		startTime := time.Now()
+
+		next.ServeHTTP(w, r)
+
+		duration := time.Since(startTime).Seconds()
+
+		requestDuration.Record(r.Context(), duration,
+			metric.WithAttributes(
+				attribute.String("method", r.Method),
+				attribute.String("path", r.URL.Path),
+			),
+		)
 	})
 }
 
@@ -170,7 +218,7 @@ func main() {
 	defer shutdown2(context.Background())
 
 	mux := http.NewServeMux()
-	mux.Handle("/a", traceMiddleware(metricMiddleware(http.HandlerFunc(handler))))
+	mux.Handle("/a", traceMiddleware(metricMiddleware(latencyMetricMiddleware(http.HandlerFunc(handler)))))
 
 	log.Println("Service A running on :8081")
 	log.Fatal(http.ListenAndServe(":8081", mux))
