@@ -1,4 +1,4 @@
-module github.com/guobinqiu/otel-demo
+module github.com/guobinqiu/opentelemetry-demo
 
 go 1.22.0
 
